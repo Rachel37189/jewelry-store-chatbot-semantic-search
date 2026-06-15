@@ -1,0 +1,7 @@
+[submodule "APIJewelryStore"]
+    path = APIJewelryStore
+    url = https://github.com/Rachel37189/APIJewelryStore.git
+
+[submodule "Jewelry-Srore-webSite"]
+    path = Jewelry-Srore-webSite
+    url = https://github.com/Rachel37189/Angular-jewelryStore.git
