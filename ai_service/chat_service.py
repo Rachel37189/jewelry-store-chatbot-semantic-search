@@ -385,26 +385,39 @@ async def search(req: SearchRequest):
             f'name={r.get("name") or r.get("productName") or ""}'
         )
 
-    if kw_matched:
-        # Important:
-        # Every keyword-matched product is returned.
-        # Semantic score is only used for ordering, not filtering.
-        results = kw_matched[:req.top_k]
+    # if kw_matched:
+    #     # Important:
+    #     # Every keyword-matched product is returned.
+    #     # Semantic score is only used for ordering, not filtering.
+    #     results = kw_matched[:req.top_k]
+    # else:
+    #     if is_broad:
+    #         # For broad queries, do NOT fallback to pure semantic.
+    #         # This prevents unrelated general jewelry from coming back.
+    #         print('[search] broad query with no keyword matches -> returning no results')
+    #         results = []
+    #     else:
+    #         # For direct/specific queries, allow strict semantic fallback.
+    #         print('[search] no keyword matches, using strict semantic fallback')
+    #         results = [r for r in scored if r['_sem'] >= 0.42][:req.top_k]
+    if is_broad:
+        # Broad query: allow keyword matches,
+        # or only very strong semantic matches.
+        results = [
+            r for r in scored
+            if r['_kw'] or r['_sem'] >= 0.55
+        ][:req.top_k]
     else:
-        if is_broad:
-            # For broad queries, do NOT fallback to pure semantic.
-            # This prevents unrelated general jewelry from coming back.
-            print('[search] broad query with no keyword matches -> returning no results')
-            results = []
-        else:
-            # For direct/specific queries, allow strict semantic fallback.
-            print('[search] no keyword matches, using strict semantic fallback')
-            results = [r for r in scored if r['_sem'] >= 0.42][:req.top_k]
-
-    for r in results:
-        r.pop('_sem', None)
-        r.pop('_kw', None)
-        r.pop('_text', None)
+        # Specific query: allow keyword matches,
+        # or regular semantic matches.
+        results = [
+            r for r in scored
+            if r['_kw'] or r['_sem'] >= 0.42
+        ][:req.top_k]
+        for r in results:
+            r.pop('_sem', None)
+            r.pop('_kw', None)
+            r.pop('_text', None)
 
     print(f'[search] returning {len(results)} results for "{query}"')
     return {'results': results}
